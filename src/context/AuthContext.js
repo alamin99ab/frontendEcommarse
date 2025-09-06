@@ -1,4 +1,3 @@
-// src/context/AuthContext.js
 "use client";
 
 import { createContext, useContext, useState, useEffect } from 'react';
@@ -8,14 +7,22 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true); // লোডিং স্টেট যোগ করা হয়েছে
 
   useEffect(() => {
-    // Page load হলে localStorage থেকে token এবং user তথ্য নিয়ে state সেট করবে
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    try {
+        const storedToken = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
+        if (storedToken && storedUser) {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+        }
+    } catch (error) {
+        console.error("Failed to parse user from localStorage", error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+    } finally {
+        setLoading(false);
     }
   }, []);
 
@@ -34,13 +41,12 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-// একটি custom hook তৈরি করা হলো, যা দিয়ে সহজে context ব্যবহার করা যাবে
 export function useAuth() {
   return useContext(AuthContext);
 }
