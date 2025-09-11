@@ -19,10 +19,10 @@ export default function RootLayout({ children }) {
       <body className={`${inter.className} bg-gray-50`}>
         <AuthProvider>
           <CartProvider>
-            <Toaster position="top-center" />
+            <Toaster position="top-center" reverseOrder={false} />
             <div className="flex flex-col min-h-screen">
               <Header />
-              <main className="flex-grow">
+              <main className="flex-grow container mx-auto px-4 py-8">
                 {children}
               </main>
               <Footer />

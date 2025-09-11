@@ -1,17 +1,22 @@
-"use client";
+'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import toast from 'react-hot-toast'; // নতুন ইমপোর্ট
+import toast from 'react-hot-toast';
 
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
 
+  //初回のレンダリング時にローカルストレージからカート情報を読み込む
   useEffect(() => {
-    const storedCart = localStorage.getItem('cartItems');
-    if (storedCart) {
-      setCartItems(JSON.parse(storedCart));
+    try {
+      const storedCart = localStorage.getItem('cartItems');
+      if (storedCart) {
+        setCartItems(JSON.parse(storedCart));
+      }
+    } catch (error) {
+      console.error("Failed to parse cart items from localStorage", error);
     }
   }, []);
 
@@ -25,7 +30,7 @@ export function CartProvider({ children }) {
       let newItems;
       if (exist) {
         newItems = prevItems.map(item =>
-          item._id === product._id ? { ...item, qty: item.qty + 1 } : item
+          item._id === product._id ? { ...item, qty: (item.qty || 1) + 1 } : item
         );
       } else {
         newItems = [...prevItems, { ...product, qty: 1 }];
@@ -33,15 +38,14 @@ export function CartProvider({ children }) {
       updateLocalStorage(newItems);
       return newItems;
     });
-    // alert এর পরিবর্তে toast.success ব্যবহার করা হয়েছে
-    toast.success(`${product.name} কার্টে যোগ করা হয়েছে!`);
+    toast.success(`${product.name} কার্টে যোগ করা হয়েছে!`);
   };
 
   const removeFromCart = (productId) => {
     setCartItems(prevItems => {
       const newItems = prevItems.filter(item => item._id !== productId);
       updateLocalStorage(newItems);
-      toast.error('পণ্যটি কার্ট থেকে সরানো হয়েছে।'); // এখানেও toast ব্যবহার করা হলো
+      toast.error('পণ্যটি কার্ট থেকে সরানো হয়েছে।');
       return newItems;
     });
   };
@@ -64,6 +68,7 @@ export function CartProvider({ children }) {
   const clearCart = () => {
     setCartItems([]);
     localStorage.removeItem('cartItems');
+    toast.success('কার্ট খালি করা হয়েছে।');
   };
 
   return (
@@ -74,5 +79,9 @@ export function CartProvider({ children }) {
 }
 
 export function useCart() {
-  return useContext(CartContext);
+  const context = useContext(CartContext);
+  if (context === undefined) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
 }
